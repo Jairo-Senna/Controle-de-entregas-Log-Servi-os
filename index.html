@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Controle de Entregas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // Aplica o tema imediatamente para evitar FOUC (Flash of Unstyled Content)
+      if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
+
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              'brand-primary': '#F97316', // Orange 500
+              'brand-secondary': '#FB923C', // Orange 400
+              'accent': '#F97316', // Orange 500
+            },
+          },
+        },
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "recharts/": "https://aistudiocdn.com/recharts@^2.12.7/",
+    "recharts": "https://aistudiocdn.com/recharts@^2.12.7"
+  }
+}
+</script>
+</head>
+  <body class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 antialiased transition-colors duration-300">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
