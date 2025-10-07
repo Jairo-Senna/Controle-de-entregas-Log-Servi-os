@@ -3,7 +3,8 @@ import React, { useMemo } from 'react';
 import {
   ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend
 } from 'recharts';
-import { AllData, DetailedTotal } from '../types';
+// FIX: Imported MonthData to correctly type month-specific data.
+import { AllData, DetailedTotal, MonthData } from '../types';
 import { getMonthKey, getQuinzena, getMonthName } from '../utils/dateUtils';
 import { ICONS } from '../constants';
 import { calculateEntryTotal, calculatePeriodTotals } from '../utils/calculationUtils';
@@ -57,7 +58,8 @@ const Charts: React.FC<{ selectedDate: Date; allData: AllData; theme: 'light' | 
 
     const dailyChartData = useMemo(() => {
         const monthKey = getMonthKey(selectedDate);
-        const monthData = allData[monthKey] || {};
+        // FIX: Cast monthData to MonthData to ensure correct type inference for its properties.
+        const monthData = (allData[monthKey] || {}) as MonthData;
         const daysInMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getDate();
         
         return Array.from({ length: daysInMonth }, (_, i) => {
@@ -75,7 +77,8 @@ const Charts: React.FC<{ selectedDate: Date; allData: AllData; theme: 'light' | 
 
         for(let i=0; i < 12; i++) {
             const monthKey = getMonthKey(date);
-            const monthData = allData[monthKey] || {};
+            // FIX: Cast monthData to MonthData to ensure correct type inference for Object.values.
+            const monthData = (allData[monthKey] || {}) as MonthData;
             let monthTotal = 0;
             Object.values(monthData).forEach(entry => {
                 monthTotal += calculateEntryTotal(entry).earnings;
@@ -154,7 +157,8 @@ const Summary: React.FC<SummaryProps> = ({ selectedDate, allData, theme }) => {
     
     const { daily, quinzena, monthly } = useMemo(() => {
         const monthKey = getMonthKey(selectedDate);
-        const monthData = allData[monthKey] || {};
+        // FIX: Cast monthData to MonthData to ensure correct type inference for Object.values.
+        const monthData = (allData[monthKey] || {}) as MonthData;
         const currentQuinzena = getQuinzena(selectedDate);
 
         // Daily

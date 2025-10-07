@@ -1,8 +1,10 @@
+
 import React, { useMemo } from 'react';
 import {
   ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend
 } from 'recharts';
-import { AllData } from '../types';
+// FIX: Imported MonthData to correctly type month-specific data.
+import { AllData, MonthData } from '../types';
 import { getMonthKey, getMonthName } from '../utils/dateUtils';
 import { ICONS } from '../constants';
 import { calculateEntryTotal } from '../utils/calculationUtils';
@@ -49,7 +51,8 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ selectedDate, all
 
     const dailyChartData = useMemo(() => {
         const monthKey = getMonthKey(selectedDate);
-        const monthData = allData[monthKey] || {};
+        // FIX: Cast monthData to MonthData to ensure correct type inference for its properties.
+        const monthData = (allData[monthKey] || {}) as MonthData;
         const daysInMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getDate();
         
         return Array.from({ length: daysInMonth }, (_, i) => {
@@ -67,7 +70,8 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ selectedDate, all
 
         for(let i=0; i < 12; i++) {
             const monthKey = getMonthKey(date);
-            const monthData = allData[monthKey] || {};
+            // FIX: Cast monthData to MonthData to ensure correct type inference for Object.values.
+            const monthData = (allData[monthKey] || {}) as MonthData;
             let monthTotal = 0;
             Object.values(monthData).forEach(entry => {
                 monthTotal += calculateEntryTotal(entry).earnings;

@@ -11,34 +11,74 @@ interface EntryFormProps {
   onDelete: () => void;
 }
 
+// A new type for form state with string values
+type FormValues = {
+  [key in DeliveryType]: {
+    normal: string;
+    express: string;
+  };
+};
+
 const EntryForm: React.FC<EntryFormProps> = ({ selectedDate, onSave, initialData, onDelete }) => {
   const emptyEntry: DailyEntry = {
     [DeliveryType.FLASH]: { normal: 0, express: 0 },
     [DeliveryType.INTERLOG]: { normal: 0, express: 0 },
     [DeliveryType.ECOMMERCE]: { normal: 0, express: 0 },
   };
+
+  const emptyFormValues: FormValues = {
+    [DeliveryType.FLASH]: { normal: '', express: '' },
+    [DeliveryType.INTERLOG]: { normal: '', express: '' },
+    [DeliveryType.ECOMMERCE]: { normal: '', express: '' },
+  };
   
-  const [entry, setEntry] = useState<DailyEntry>(emptyEntry);
+  const [formValues, setFormValues] = useState<FormValues>(emptyFormValues);
 
   useEffect(() => {
-    // Migra os dados antigos ao carregar o formulário
-    setEntry(initialData ? migrateEntry(initialData) : emptyEntry);
+    const data = initialData ? migrateEntry(initialData) : emptyEntry;
+    
+    const newFormValues: FormValues = {
+      [DeliveryType.FLASH]: {
+        normal: data.flash.normal > 0 ? String(data.flash.normal) : '',
+        express: data.flash.express > 0 ? String(data.flash.express) : '',
+      },
+      [DeliveryType.INTERLOG]: {
+        normal: data.interlog.normal > 0 ? String(data.interlog.normal) : '',
+        express: data.interlog.express > 0 ? String(data.interlog.express) : '',
+      },
+      [DeliveryType.ECOMMERCE]: {
+        normal: data.ecommerce.normal > 0 ? String(data.ecommerce.normal) : '',
+        express: data.ecommerce.express > 0 ? String(data.ecommerce.express) : '',
+      },
+    };
+
+    setFormValues(newFormValues);
   }, [selectedDate, initialData]);
 
   const handleChange = (type: DeliveryType, subType: keyof DeliveryCount, value: string) => {
-    const numValue = parseInt(value, 10) || 0;
-    setEntry(prev => ({
-        ...prev,
-        [type]: {
-            ...prev[type],
-            [subType]: Math.max(0, numValue)
-        }
-    }));
+    // Allow only non-negative integers
+    if (/^\d*$/.test(value)) {
+        // Prevent leading zeros unless it's just "0"
+        const sanitizedValue = value.length > 1 && value.startsWith('0') ? value.substring(1) : value;
+        setFormValues(prev => ({
+            ...prev,
+            [type]: {
+                ...prev[type],
+                [subType]: sanitizedValue
+            }
+        }));
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(entry);
+    const entryToSave: DailyEntry = JSON.parse(JSON.stringify(emptyEntry));
+    for (const type of Object.values(DeliveryType)) {
+        entryToSave[type].normal = Number(formValues[type].normal) || 0;
+        entryToSave[type].express = Number(formValues[type].express) || 0;
+    }
+
+    onSave(entryToSave);
     alert(`Entregas ${initialData ? 'atualizadas' : 'salvas'} para ${getFormattedDate(selectedDate)}`);
   };
 
@@ -68,10 +108,11 @@ const EntryForm: React.FC<EntryFormProps> = ({ selectedDate, onSave, initialData
                   type="number"
                   id={`${type}-normal`}
                   name={`${type}-normal`}
-                  value={entry[type]?.normal || 0}
+                  value={formValues[type]?.normal}
                   onChange={(e) => handleChange(type, 'normal', e.target.value)}
                   className="w-full bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md py-2 px-3 text-slate-800 dark:text-slate-200 focus:ring-brand-primary focus:border-brand-primary transition"
                   min="0"
+                  placeholder="0"
                 />
               </div>
             ) : (
@@ -82,10 +123,11 @@ const EntryForm: React.FC<EntryFormProps> = ({ selectedDate, onSave, initialData
                     type="number"
                     id={`${type}-normal`}
                     name={`${type}-normal`}
-                    value={entry[type]?.normal || 0}
+                    value={formValues[type]?.normal}
                     onChange={(e) => handleChange(type, 'normal', e.target.value)}
                     className="w-full bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md py-2 px-3 text-slate-800 dark:text-slate-200 focus:ring-brand-primary focus:border-brand-primary transition"
                     min="0"
+                    placeholder="0"
                   />
                 </div>
                 <div>
@@ -94,10 +136,11 @@ const EntryForm: React.FC<EntryFormProps> = ({ selectedDate, onSave, initialData
                     type="number"
                     id={`${type}-express`}
                     name={`${type}-express`}
-                    value={entry[type]?.express || 0}
+                    value={formValues[type]?.express}
                     onChange={(e) => handleChange(type, 'express', e.target.value)}
                     className="w-full bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md py-2 px-3 text-slate-800 dark:text-slate-200 focus:ring-brand-primary focus:border-brand-primary transition"
                     min="0"
+                    placeholder="0"
                   />
                 </div>
               </div>
