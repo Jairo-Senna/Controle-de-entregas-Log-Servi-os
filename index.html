@@ -4,6 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Controle de Entregas</title>
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#F97316" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Controle de Entregas" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <!-- Fim das PWA Meta Tags -->
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       // Aplica o tema imediatamente para evitar FOUC (Flash of Unstyled Content)
@@ -41,5 +51,18 @@
   <body class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 antialiased transition-colors duration-300">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
+    
+    <!-- Registro do PWA Service Worker -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').then(registration => {
+            console.log('ServiceWorker registrado com sucesso com o escopo: ', registration.scope);
+          }).catch(err => {
+            console.log('Falha no registro do ServiceWorker: ', err);
+          });
+        });
+      }
+    </script>
   </body>
 </html>

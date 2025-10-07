@@ -180,7 +180,7 @@ const App: React.FC = () => {
               </button>
               <div className="flex items-center">
                 <span className="h-7 w-7 text-brand-primary">
-                  {ICONS.MOTORCYCLE}
+                  {ICONS.ENVELOPE}
                 </span>
                 <h1 className="text-2xl sm:text-3xl font-bold ml-3 text-slate-800 dark:text-slate-200">
                   Controle de Entregas
