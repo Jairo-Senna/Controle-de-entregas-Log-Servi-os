@@ -135,7 +135,7 @@ const App: React.FC = () => {
         isOpen={isSidebarOpen} 
         onClose={() => setIsSidebarOpen(false)}
       >
-        <History allData={data} />
+        <History allData={data} expenses={expenses} />
         <div className="mt-auto p-4 space-y-4 border-t border-slate-200 dark:border-slate-700">
            <button 
             onClick={toggleTheme}
