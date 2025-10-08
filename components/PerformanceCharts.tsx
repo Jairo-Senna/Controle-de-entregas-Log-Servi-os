@@ -1,13 +1,12 @@
 
 import React, { useMemo } from 'react';
 import {
-  ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend
+  ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell
 } from 'recharts';
-// FIX: Imported MonthData to correctly type month-specific data.
-import { AllData, MonthData } from '../types';
+import { AllData, MonthData, DeliveryType } from '../types';
 import { getMonthKey, getMonthName } from '../utils/dateUtils';
-import { ICONS } from '../constants';
-import { calculateEntryTotal } from '../utils/calculationUtils';
+import { ICONS, RATES, DELIVERY_TYPE_NAMES } from '../constants';
+import { calculateEntryTotal, migrateEntry } from '../utils/calculationUtils';
 
 interface PerformanceChartsProps {
   selectedDate: Date;
@@ -39,6 +38,21 @@ const CustomMonthTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
+const RADIAN = Math.PI / 180;
+const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+  if (percent * 100 < 5) return null;
+
+  return (
+    <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central">
+      {`${(percent * 100).toFixed(0)}%`}
+    </text>
+  );
+};
+
 
 const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ selectedDate, allData, theme }) => {
     const chartColors = {
@@ -49,9 +63,10 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ selectedDate, all
         tooltipCursor: theme === 'light' ? 'rgba(251, 146, 60, 0.2)' : 'rgba(251, 146, 60, 0.2)',
     };
 
+    const PIE_COLORS = ['#F97316', '#FB923C', '#FDBA74'];
+
     const dailyChartData = useMemo(() => {
         const monthKey = getMonthKey(selectedDate);
-        // FIX: Cast monthData to MonthData to ensure correct type inference for its properties.
         const monthData = (allData[monthKey] || {}) as MonthData;
         const daysInMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getDate();
         
@@ -70,7 +85,6 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ selectedDate, all
 
         for(let i=0; i < 12; i++) {
             const monthKey = getMonthKey(date);
-            // FIX: Cast monthData to MonthData to ensure correct type inference for Object.values.
             const monthData = (allData[monthKey] || {}) as MonthData;
             let monthTotal = 0;
             Object.values(monthData).forEach(entry => {
@@ -85,10 +99,63 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ selectedDate, all
         return data.reverse();
     }, [selectedDate, allData]);
 
+    const monthlyTypeBreakdownData = useMemo(() => {
+        const monthKey = getMonthKey(selectedDate);
+        const monthData = (allData[monthKey] || {}) as MonthData;
+        const totals = {
+            [DeliveryType.FLASH]: 0,
+            [DeliveryType.INTERLOG]: 0,
+            [DeliveryType.ECOMMERCE]: 0,
+        };
+
+        for (const day in monthData) {
+            const entry = migrateEntry(monthData[day]);
+            totals[DeliveryType.FLASH] += (entry.flash.normal * RATES.NORMAL.flash) + (entry.flash.express * RATES.EXPRESS.flash);
+            totals[DeliveryType.INTERLOG] += (entry.interlog.normal * RATES.NORMAL.interlog) + (entry.interlog.express * RATES.EXPRESS.interlog);
+            totals[DeliveryType.ECOMMERCE] += (entry.ecommerce.normal * RATES.NORMAL.ecommerce) + (entry.ecommerce.express * RATES.EXPRESS.ecommerce);
+        }
+        
+        return Object.entries(totals)
+            .map(([type, earnings]) => ({
+                name: DELIVERY_TYPE_NAMES[type as DeliveryType],
+                value: earnings,
+            }))
+            .filter(item => item.value > 0);
+    }, [selectedDate, allData]);
+
+
     return (
         <div className="bg-slate-100 dark:bg-slate-800 p-6 rounded-lg shadow-lg">
             <h3 className="text-lg font-semibold text-brand-primary flex items-center mb-4">{ICONS.CHART_BAR}Gráficos de Desempenho</h3>
-            <div className="space-y-6">
+            <div className="space-y-8">
+                <div>
+                    <h4 className="text-md font-semibold text-slate-600 dark:text-slate-300 mb-2">Ganhos por Tipo de Entrega em {getMonthName(selectedDate)}</h4>
+                     {monthlyTypeBreakdownData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={250}>
+                             <PieChart>
+                                <Pie
+                                    data={monthlyTypeBreakdownData}
+                                    cx="50%"
+                                    cy="50%"
+                                    labelLine={false}
+                                    label={renderCustomizedLabel}
+                                    outerRadius={80}
+                                    fill="#8884d8"
+                                    dataKey="value"
+                                    stroke="none"
+                                >
+                                    {monthlyTypeBreakdownData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip formatter={(value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} />
+                                <Legend wrapperStyle={{ paddingTop: '10px' }} />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <p className="text-center text-slate-500 dark:text-slate-400 py-10">Sem dados de ganhos neste mês para exibir o gráfico.</p>
+                    )}
+                </div>
                 <div>
                     <h4 className="text-md font-semibold text-slate-600 dark:text-slate-300 mb-2">Ganhos diários em {getMonthName(selectedDate)}</h4>
                      <ResponsiveContainer width="100%" height={200}>
