@@ -5,21 +5,26 @@ name: Deploy ao GitHub Pages com Vite
 # Define quando este workflow será executado
 on:
   push:
-    branches: ["main"] # Ocorre quando há um push na branch 'main'
-  workflow_dispatch: # Permite execução manual na aba Actions
+    branches: ["main"]
+  workflow_dispatch:
 
 # Define permissões necessárias para o GitHub Pages
 permissions:
   contents: read
-  pages: write
+  pages: write # Permissão necessária para publicar
   id-token: write
 
 # Define o conjunto de jobs (tarefas) a serem executadas
 jobs:
   # O job de Build e Deploy
   build-and-deploy:
-    runs-on: ubuntu-latest # Executa em um servidor Ubuntu no GitHub
-
+    runs-on: ubuntu-latest
+    
+    # CORREÇÃO: Adiciona o ambiente de deploy para resolver o erro 'Ambiente ausente'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
     steps:
       # 1. Checkout: Baixa o seu código do repositório
       - name: Checkout do Repositório
@@ -29,13 +34,13 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Versão estável do Node.js
+          node-version: '20'
 
       # 3. Instala Dependências e faz o Build
       - name: Instalar Dependências e Construir (Build)
         run: |
           npm install
-          npm run build # Executa o comando que cria a pasta 'dist'
+          npm run build # Cria a pasta 'dist'
 
       # 4. Configura o GitHub Pages
       - name: Configurar GitHub Pages
