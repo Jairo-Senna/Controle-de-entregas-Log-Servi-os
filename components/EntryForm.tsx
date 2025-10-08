@@ -79,13 +79,11 @@ const EntryForm: React.FC<EntryFormProps> = ({ selectedDate, onSave, initialData
     }
 
     onSave(entryToSave);
-    alert(`Entregas ${initialData ? 'atualizadas' : 'salvas'} para ${getFormattedDate(selectedDate)}`);
   };
 
   const handleDelete = () => {
     if (window.confirm(`Tem certeza que deseja excluir os registros do dia ${getFormattedDate(selectedDate)}? Esta ação não pode ser desfeita.`)) {
       onDelete();
-      alert('Registro excluído.');
     }
   };
   

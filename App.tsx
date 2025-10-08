@@ -6,10 +6,11 @@ import Sidebar from './components/Sidebar';
 import History from './components/History';
 import FloatingActionButton from './components/FloatingActionButton';
 import FuelExpenseModal from './components/FuelExpenseModal';
+import Toast from './components/Toast'; // Import Toast
 import useLocalStorage from './hooks/useLocalStorage';
 import useTheme from './hooks/useTheme';
 import { AllData, DailyEntry, ExpenseData } from './types';
-import { getMonthKey, getQuinzena } from './utils/dateUtils';
+import { getMonthKey, getQuinzena, getFormattedDate } from './utils/dateUtils';
 import { ICONS } from './constants';
 import { calculatePeriodTotals } from './utils/calculationUtils';
 
@@ -21,30 +22,37 @@ const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAddingEntry, setIsAddingEntry] = useState(false);
   const [isFuelModalOpen, setIsFuelModalOpen] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   const currentMonthKeyForCalendar = useMemo(() => getMonthKey(selectedDate), [selectedDate]);
   const currentMonthDataForCalendar = useMemo(() => data[currentMonthKeyForCalendar] || {}, [data, currentMonthKeyForCalendar]);
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setToast({ message, type });
+  };
 
   const handleDateChange = (date: Date) => {
     setSelectedDate(date);
   };
 
-  const handleSaveEntry = useCallback((entry: DailyEntry) => {
-    const day = selectedDate.getDate();
-    const monthKey = getMonthKey(selectedDate);
+  const handleSaveEntry = useCallback((entry: DailyEntry, date: Date) => {
+    const day = date.getDate();
+    const monthKey = getMonthKey(date);
     
     setData(prevData => {
         const newData = { ...prevData };
         const newMonthData = { ...(newData[monthKey] || {}) };
+        const isUpdating = !!newMonthData[day];
         newMonthData[day] = entry;
         newData[monthKey] = newMonthData;
+        showToast(`Entregas ${isUpdating ? 'atualizadas' : 'salvas'} para ${getFormattedDate(date)}!`);
         return newData;
     });
-  }, [selectedDate, setData]);
+  }, [setData]);
 
-  const handleDeleteEntry = useCallback(() => {
-    const day = selectedDate.getDate();
-    const monthKey = getMonthKey(selectedDate);
+  const handleDeleteEntry = useCallback((date: Date) => {
+    const day = date.getDate();
+    const monthKey = getMonthKey(date);
 
     setData(prevData => {
         const newData = { ...prevData };
@@ -58,17 +66,17 @@ const App: React.FC = () => {
         } else {
             newData[monthKey] = newMonthData;
         }
-        
+        showToast(`Registro de ${getFormattedDate(date)} excluído.`, 'error');
         return newData;
     });
-  }, [selectedDate, setData]);
+  }, [setData]);
 
   const handleClearData = useCallback(() => {
     if (window.confirm('Você tem certeza que deseja apagar TODOS os seus dados? Esta ação não pode ser desfeita.')) {
       setData({});
       setExpenses({});
       setIsSidebarOpen(false);
-      alert('Todos os dados foram apagados.');
+      showToast('Todos os dados foram apagados.', 'error');
     }
   }, [setData, setExpenses]);
   
@@ -89,7 +97,7 @@ const App: React.FC = () => {
           [quinzenaKey]: (prev[quinzenaKey] || 0) + amount,
       }));
       setIsFuelModalOpen(false);
-      alert('Gasto com combustível salvo!');
+      showToast('Gasto com combustível salvo!');
   }, [setExpenses]);
 
   const { quinzenaTotals, monthlyTotals, quinzenaExpense, monthlyExpense } = useMemo(() => {
@@ -217,6 +225,13 @@ const App: React.FC = () => {
         onSave={handleSaveFuelExpense}
         currentValue={quinzenaExpense}
       />
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </>
   );
 };

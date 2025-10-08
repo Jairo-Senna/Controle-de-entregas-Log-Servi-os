@@ -7,9 +7,10 @@ interface CalendarProps {
   selectedDate: Date;
   onDateChange: (date: Date) => void;
   monthData: MonthData;
+  lastUpdatedDay?: number | null;
 }
 
-const Calendar: React.FC<CalendarProps> = ({ selectedDate, onDateChange, monthData }) => {
+const Calendar: React.FC<CalendarProps> = ({ selectedDate, onDateChange, monthData, lastUpdatedDay }) => {
   const [displayDate, setDisplayDate] = useState(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
 
   const daysInMonth = useMemo(() => getDaysInMonth(displayDate), [displayDate]);
@@ -57,15 +58,17 @@ const Calendar: React.FC<CalendarProps> = ({ selectedDate, onDateChange, monthDa
           const isSelected = isSameDay(day, selectedDate);
           const isToday = isSameDay(day, today);
           const hasEntry = !!monthData[day.getDate()];
+          const isLastUpdated = day.getDate() === lastUpdatedDay && displayDate.getMonth() === selectedDate.getMonth();
 
           const baseClasses = "w-10 h-10 flex items-center justify-center rounded-full cursor-pointer transition-all duration-200";
           const selectedClasses = "bg-brand-primary text-white font-bold shadow-md";
           const todayClasses = "border-2 border-brand-secondary";
           const defaultClasses = "hover:bg-slate-200 dark:hover:bg-slate-700";
+          const updatedClasses = isLastUpdated ? "animate-highlight" : "";
           
-          let dayClasses = `${baseClasses} ${defaultClasses}`;
-          if (isSelected) dayClasses = `${baseClasses} ${selectedClasses}`;
-          else if (isToday) dayClasses = `${baseClasses} ${todayClasses} ${defaultClasses}`;
+          let dayClasses = `${baseClasses} ${defaultClasses} ${updatedClasses}`;
+          if (isSelected) dayClasses = `${baseClasses} ${selectedClasses} ${updatedClasses}`;
+          else if (isToday) dayClasses = `${baseClasses} ${todayClasses} ${defaultClasses} ${updatedClasses}`;
           
           return (
             <div key={day.toString()} className="flex justify-center items-center">

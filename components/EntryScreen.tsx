@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Calendar from './Calendar';
 import EntryForm from './EntryForm';
 import { DailyEntry, MonthData, OldDailyEntry } from '../types';
@@ -9,12 +9,29 @@ interface EntryScreenProps {
   selectedDate: Date;
   onDateChange: (date: Date) => void;
   monthData: MonthData;
-  onSave: (entry: DailyEntry) => void;
+  onSave: (entry: DailyEntry, date: Date) => void;
   initialData?: DailyEntry | OldDailyEntry;
-  onDelete: () => void;
+  onDelete: (date: Date) => void;
 }
 
 const EntryScreen: React.FC<EntryScreenProps> = (props) => {
+  const [lastUpdatedDay, setLastUpdatedDay] = useState<number | null>(null);
+
+  const handleDateChangeWithReset = (date: Date) => {
+    setLastUpdatedDay(null);
+    props.onDateChange(date);
+  };
+
+  const handleSaveWrapper = (entry: DailyEntry) => {
+    props.onSave(entry, props.selectedDate);
+    setLastUpdatedDay(props.selectedDate.getDate());
+  };
+
+  const handleDeleteWrapper = () => {
+    props.onDelete(props.selectedDate);
+    setLastUpdatedDay(props.selectedDate.getDate());
+  };
+
   return (
     <div className="fixed inset-0 bg-white dark:bg-slate-900 z-50 p-4 sm:p-6 lg:p-8 overflow-y-auto">
       <div className="max-w-7xl mx-auto">
@@ -37,8 +54,9 @@ const EntryScreen: React.FC<EntryScreenProps> = (props) => {
             <div className="bg-slate-100 dark:bg-slate-800 p-6 rounded-lg shadow-lg">
               <Calendar
                 selectedDate={props.selectedDate}
-                onDateChange={props.onDateChange}
+                onDateChange={handleDateChangeWithReset}
                 monthData={props.monthData}
+                lastUpdatedDay={lastUpdatedDay}
               />
             </div>
           </div>
@@ -46,9 +64,9 @@ const EntryScreen: React.FC<EntryScreenProps> = (props) => {
             <div className="bg-slate-100 dark:bg-slate-800 p-6 rounded-lg shadow-lg">
               <EntryForm
                 selectedDate={props.selectedDate}
-                onSave={props.onSave}
+                onSave={handleSaveWrapper}
                 initialData={props.initialData}
-                onDelete={props.onDelete}
+                onDelete={handleDeleteWrapper}
               />
             </div>
           </div>
